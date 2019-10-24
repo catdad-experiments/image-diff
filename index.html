@@ -67,10 +67,12 @@
     
     const computeDiff = async (from, to) => {
       if (from.width !== to.width) {
+        console.log(from.width, to.width);
         throw new Error('the images do not have the same width');
       }
       
       if (from.height !== to.height) {
+        console.log(from.height, to.height);
         throw new Error('the images do not have the same height');
       }
       
