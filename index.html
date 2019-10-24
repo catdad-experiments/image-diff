@@ -16,6 +16,7 @@
   <div>
     <input id="original" type="file">
     <input id="candidate" type="file">
+    <input type="number" id="fuzz">
   </div>
   <div>
     <canvas></canvas>
@@ -23,6 +24,7 @@
   <script>
     const original = document.querySelector('#original');
     const candidate = document.querySelector('#candidate');
+    const fuzz = document.querySelector('#fuzz');
     const canvas = document.querySelector('canvas');
     
     const files = new Map();
@@ -73,7 +75,8 @@
       }
       
       console.time('diffing');
-      
+
+      const fuzzAllowed = Number(fuzz.value) || 0;
       const output = document.createElement('canvas').getContext('2d').createImageData(from.width, from.height);
       let differentPixels = 0;
       let totalPixels = 0;
@@ -84,7 +87,9 @@
         const [fr, fg, fb, fa] = from.data.slice(i, i+4);
         const [tr, tg, tb, ta] = to.data.slice(i, i+4);
         
-        if (fr === tr && fg === tg && fb === tb && fa === ta) {
+        const pixelMatches = Math.abs(fr - tr) + Math.abs(fb - tb) + Math.abs(fg - tg) + Math.abs(fa - ta) < fuzzAllowed;
+        
+        if (pixelMatches) {
           output.data[i + 0] = Math.round((fr + fr + 255) / 3);
           output.data[i + 1] = Math.round((fg + fg + 255) / 3);
           output.data[i + 2] = Math.round((fb + fb + 255) / 3);
