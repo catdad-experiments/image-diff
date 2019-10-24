@@ -75,17 +75,22 @@
       console.time('diffing');
       
       const output = document.createElement('canvas').getContext('2d').createImageData(from.width, from.height);
+      let differentPixels = 0;
+      let totalPixels = 0;
       
       for (let i = 0; i < from.data.length; i += 4) {
+        totalPixels += 1;
+        
         const [fr, fg, fb, fa] = from.data.slice(i, i+4);
         const [tr, tg, tb, ta] = to.data.slice(i, i+4);
         
         if (fr === tr && fg === tg && fb === tb && fa === ta) {
-          output.data[i + 0] = Math.round((fr + 255) / 2);
-          output.data[i + 1] = Math.round((fg + 255) / 2);
-          output.data[i + 2] = Math.round((fb + 255) / 2);
+          output.data[i + 0] = Math.round((fr + fr + 255) / 3);
+          output.data[i + 1] = Math.round((fg + fg + 255) / 3);
+          output.data[i + 2] = Math.round((fb + fb + 255) / 3);
           output.data[i + 3] = fa;
         } else {
+          differentPixels += 1;
           output.data[i + 0] = 255;
           output.data[i + 1] = 0;
           output.data[i + 2] = 0;
@@ -95,6 +100,9 @@
       
       console.timeEnd('diffing');
 
+      const diffPercent = differentPixels / totalPixels * 100;
+      console.log(`difference of ${diffPercent.toFixed(2)}%`);
+      
       return output;
     };
     
@@ -108,11 +116,15 @@
       console.log(which, 'saved');
       
       if (files.has('original') && files.has('candidate')) {
-        const diffData = await computeDiff(files.get('original'), files.get('candidate'));
+        const original = files.get('original');
+        const candidate = files.get('candidate');
+        const diffData = await computeDiff(original, candidate);
         
-        canvas.width = diffData.width;
+        canvas.width = diffData.width * 3;
         canvas.height = diffData.height;
-        canvas.getContext('2d').putImageData(diffData, 0, 0);
+        canvas.getContext('2d').putImageData(original, 0, 0);
+        canvas.getContext('2d').putImageData(diffData, original.width, 0);
+        canvas.getContext('2d').putImageData(candidate, original.width * 2, 0);
       }
     };
     
