@@ -64,9 +64,38 @@
     };
     
     const computeDiff = async (from, to) => {
-      console.log('computing diff');
-      console.log(from);
-      return from;
+      if (from.width !== to.width) {
+        throw new Error('the images do not have the same width');
+      }
+      
+      if (from.height !== to.height) {
+        throw new Error('the images do not have the same height');
+      }
+      
+      console.time('diffing');
+      
+      const output = document.createElement('canvas').getContext('2d').createImageData(from.width, from.height);
+      
+      for (let i = 0; i < from.data.length; i += 4) {
+        const [fr, fg, fb, fa] = from.data.slice(i, i+4);
+        const [tr, tg, tb, ta] = to.data.slice(i, i+4);
+        
+        if (fr === tr && fg === tg && fb === tb && fa === ta) {
+          output.data[i + 0] = Math.round((fr + 255) / 2);
+          output.data[i + 1] = Math.round((fg + 255) / 2);
+          output.data[i + 2] = Math.round((fb + 255) / 2);
+          output.data[i + 3] = fa;
+        } else {
+          output.data[i + 0] = 255;
+          output.data[i + 1] = 0;
+          output.data[i + 2] = 0;
+          output.data[i + 3] = 255;
+        }
+      }
+      
+      console.timeEnd('diffing');
+
+      return output;
     };
     
     const loadFile = which => async (ev) => {
@@ -83,9 +112,7 @@
         
         canvas.width = diffData.width;
         canvas.height = diffData.height;
-        const ctx = canvas.getContext('2d');
-
-        ctx.putImageData(diffData, 0, 0);
+        canvas.getContext('2d').putImageData(diffData, 0, 0);
       }
     };
     
