@@ -124,7 +124,10 @@ export default () => {
     content.classList.add('loading');
     await next();
 
-    const { imageData, difference, time } = await computeDiff(original, candidate, Number(fuzz.value) || 0);
+    // const fuzzValue = Number(fuzz.value) || 0;
+    // 10% in ImageMagic seems to be 10% per channel, not total ... I think
+    const fuzzValue = (Number(fuzz.value) || 0) * 4;
+    const { imageData, difference, time } = await computeDiff(original, candidate, fuzzValue);
 
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
