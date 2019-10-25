@@ -3,43 +3,73 @@
 <head>
   <meta charset="UTF-8">
   <title>Image Diff</title>
-  
+
   <style>
     html, body {
       background: #202124;
       color: #eee;
       font-family: sans-serif;
+      min-height: 100%;
+      display: flex;
+      width: 100%;
+      padding: 0;
+      margin: 0;
+      flex-direction: column;
     }
-    
-    canvas {
+
+    .controls {
       padding: 10px;
-      max-width: 80vw;
+      flex-grow: 1;
+      display: flex;
+      font-weight: bold;
+    }
+
+    .controls > * {
+      flex-grow: 1;
+      text-align: center;
+    }
+
+    .content {
+      flex-grow: 2;
+      background: pink;
+      padding: 10px;
+    }
+
+    .content img {
+      max-width: 100%;
       max-height: 80vh;
     }
   </style>
 </head>
 <body>
-  
-  <div>
-    <input id="original" type="file">
-    <input id="candidate" type="file">
-    <input type="number" id="fuzz">
+
+  <div class="controls">
+    <div id="original">
+      Original file:<br/>
+      Drop an image here or click to open an image
+    </div>
+    <div class="inputs">
+      Fuzz: <input type="number" id="fuzz">
+    </div>
+    <div id="candidate">
+      Candidate file:<br/>
+      Drop an image here or click to open an image
+    </div>
   </div>
-  
-  <div>
-    <canvas></canvas>
+
+  <div class="content">
   </div>
-  
+
   <script type="module">
     import loader from './src/loader.js';
-    
+
 //    document.querySelector('.unsupported').remove();
 //    document.querySelector('.container').classList.remove('hide');
-    
+
     window.addEventListener('load', function () {
       loader();
     });
   </script>
-  
+
 </body>
 </html>
