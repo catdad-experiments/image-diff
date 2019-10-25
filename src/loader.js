@@ -58,7 +58,7 @@ const computeDiff = async (from, to, fuzz) => {
     const [fr, fg, fb, fa] = from.data.slice(i, i+4);
     const [tr, tg, tb, ta] = to.data.slice(i, i+4);
 
-    const pixelMatches = Math.abs(fr - tr) + Math.abs(fb - tb) + Math.abs(fg - tg) + Math.abs(fa - ta) < fuzz;
+    const pixelMatches = Math.abs(fr - tr) + Math.abs(fb - tb) + Math.abs(fg - tg) + Math.abs(fa - ta) <= fuzz;
 
     if (pixelMatches) {
       output.data[i + 0] = Math.round((fr + fr + 255) / 3);
