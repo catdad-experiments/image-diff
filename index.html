@@ -9,7 +9,7 @@
       background: #202124;
       color: #eee;
       font-family: sans-serif;
-      min-height: 100%;
+      height: 100%;
       display: flex;
       width: 100%;
       padding: 0;
@@ -17,7 +17,8 @@
       flex-direction: column;
     }
 
-    .controls {
+    header {
+      flex: 0 1 auto;
       padding: 10px;
       display: flex;
       font-weight: bold;
@@ -37,18 +38,49 @@
     }
 
     .content {
+      flex: 2;
       padding: 10px;
+      display: flex;
+      align-items: center;
+    }
+
+    .content.loading {
+      background-image: url('./third-party/loading.svg');
+      background-repeat: no-repeat;
+      background-position: center;
+      background-size: 20vh;
     }
 
     .content img {
       max-width: 100%;
       max-height: 80vh;
     }
+
+    footer {
+      flex: 0 1 2em;
+      background: rgba(255, 255, 255, 0.1);
+      display: flex;
+      justify-content: center;
+    }
+
+    footer a {
+      color: currentColor;
+      display: flex;
+      align-items: center;
+      text-decoration: none;
+    }
+
+    footer a i.material-icons {
+      font-size: 1em;
+      padding: 0 2px;
+    }
   </style>
+
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 </head>
 <body>
 
-  <div class="controls">
+  <header class="controls">
     <div id="original" class="drop">
       Original file:<br/>
       Drop an image here or click to open an image
@@ -60,10 +92,19 @@
       Candidate file:<br/>
       Drop an image here or click to open an image
     </div>
-  </div>
+  </header>
 
   <div class="content">
   </div>
+
+  <footer>
+    <a href="https://github.com/catdad">
+      <i class="material-icons">code</i>
+      <span> with </span>
+      <i class="material-icons">favorite</i>
+      <span> by <b>catdad</b></span>
+    </a>
+  </footer>
 
   <script type="module">
     import loader from './src/loader.js';

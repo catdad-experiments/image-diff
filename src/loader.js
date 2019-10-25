@@ -52,6 +52,7 @@ const computeDiff = async (from, to, fuzz) => {
   const output = document.createElement('canvas').getContext('2d').createImageData(from.width, from.height);
   let differentPixels = 0;
   let totalPixels = 0;
+  let stamp = Date.now();
 
   for (let i = 0; i < from.data.length; i += 4) {
     totalPixels += 1;
@@ -72,6 +73,11 @@ const computeDiff = async (from, to, fuzz) => {
       output.data[i + 1] = 0;
       output.data[i + 2] = 0;
       output.data[i + 3] = 255;
+    }
+
+    if (Date.now() - stamp > 16) {
+      await next();
+      stamp = Date.now();
     }
   }
 
@@ -111,6 +117,7 @@ export default () => {
   const files = new Map();
 
   const executeIfFilesLoaded = async () => {
+    content.classList.add('loading');
     await next();
 
     const original = files.get('original');
@@ -132,6 +139,7 @@ export default () => {
 
     content.innerHTML = '';
     await loadDisplayImage(content, canvas);
+    content.classList.remove('loading');
   };
 
   const loadLabel = (elem, text, name) => {
