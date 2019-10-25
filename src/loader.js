@@ -38,16 +38,14 @@ const getImageData = async file => {
 
 const computeDiff = async (from, to, fuzz) => {
   if (from.width !== to.width) {
-    console.log(from.width, to.width);
     throw new Error('the images do not have the same width');
   }
 
   if (from.height !== to.height) {
-    console.log(from.height, to.height);
     throw new Error('the images do not have the same height');
   }
 
-  console.time('diffing');
+  const start = Date.now();
 
   const output = document.createElement('canvas').getContext('2d').createImageData(from.width, from.height);
   let differentPixels = 0;
@@ -81,12 +79,9 @@ const computeDiff = async (from, to, fuzz) => {
     }
   }
 
-  console.timeEnd('diffing');
+  const diffPercent = differentPixels / totalPixels;
 
-  const diffPercent = differentPixels / totalPixels * 100;
-  console.log(`difference of ${diffPercent.toFixed(2)}%`);
-
-  return output;
+  return { imageData: output, difference: diffPercent, time: Date.now() - start };
 };
 
 const loadDisplayImage = (() => {
@@ -113,10 +108,12 @@ export default () => {
   const candidate = document.querySelector('#candidate');
   const fuzz = document.querySelector('#fuzz');
   const content = document.querySelector('.content');
+  const percent = document.querySelector('.percent');
 
   const files = new Map();
 
   const executeIfFilesLoaded = async () => {
+    content.innerHTML = '';
     content.classList.add('loading');
     await next();
 
@@ -127,19 +124,21 @@ export default () => {
       return;
     }
 
-    const diffData = await computeDiff(original, candidate, Number(fuzz.value) || 0);
+    const { imageData, difference, time } = await computeDiff(original, candidate, Number(fuzz.value) || 0);
 
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
-    canvas.width = diffData.width * 3;
-    canvas.height = diffData.height;
+    canvas.width = imageData.width * 3;
+    canvas.height = imageData.height;
     ctx.putImageData(original, 0, 0);
-    ctx.putImageData(diffData, original.width, 0);
+    ctx.putImageData(imageData, original.width, 0);
     ctx.putImageData(candidate, original.width * 2, 0);
 
     content.innerHTML = '';
     await loadDisplayImage(content, canvas);
     content.classList.remove('loading');
+
+    percent.innerHTML = `${(difference * 100).toFixed(2)}% difference<br/>in ${time}ms`;
   };
 
   const loadLabel = (elem, text, name) => {
@@ -214,8 +213,10 @@ export default () => {
 
     if (promise) {
       promise.then(() => {
+        // eslint-disable-next-line no-console
         console.log('loaded dropped files');
       }).catch(err => {
+        // eslint-disable-next-line no-console
         console.log('error handling dropped files', err);
       });
     }
