@@ -113,16 +113,16 @@ export default () => {
   const files = new Map();
 
   const executeIfFilesLoaded = async () => {
-    content.innerHTML = '';
-    content.classList.add('loading');
-    await next();
-
     const original = files.get('original');
     const candidate = files.get('candidate');
 
     if (!(original && candidate)) {
       return;
     }
+
+    content.innerHTML = '';
+    content.classList.add('loading');
+    await next();
 
     const { imageData, difference, time } = await computeDiff(original, candidate, Number(fuzz.value) || 0);
 
