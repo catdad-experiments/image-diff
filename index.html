@@ -19,19 +19,24 @@
 
     .controls {
       padding: 10px;
-      flex-grow: 1;
       display: flex;
       font-weight: bold;
     }
 
     .controls > * {
       flex-grow: 1;
+      width: 33%;
       text-align: center;
     }
 
+    .controls .drop {
+      border: 1px dashed #eee;
+      padding: 20px;
+      border-radius: 20px;
+      line-height: 2;
+    }
+
     .content {
-      flex-grow: 2;
-      background: pink;
       padding: 10px;
     }
 
@@ -44,14 +49,14 @@
 <body>
 
   <div class="controls">
-    <div id="original">
+    <div id="original" class="drop">
       Original file:<br/>
       Drop an image here or click to open an image
     </div>
     <div class="inputs">
-      Fuzz: <input type="number" id="fuzz">
+      Fuzz: <input type="number" value="10" id="fuzz">
     </div>
-    <div id="candidate">
+    <div id="candidate" class="drop">
       Candidate file:<br/>
       Drop an image here or click to open an image
     </div>
