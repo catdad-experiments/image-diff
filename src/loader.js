@@ -36,6 +36,25 @@ const getImageData = async file => {
   return ctx.getImageData(0, 0, naturalWidth, naturalHeight);
 };
 
+const distance3D = (a, b) => {
+  return Math.sqrt(
+    Math.pow(a[0] - b[0], 2) +
+    Math.pow(a[1] - b[1], 2) +
+    Math.pow(a[2] - b[2], 2)
+  );
+};
+
+const distance4D = (a, b) => {
+  return Math.sqrt(
+    Math.pow(a[0] - b[0], 2) +
+    Math.pow(a[1] - b[1], 2) +
+    Math.pow(a[2] - b[2], 2) +
+    Math.pow(a[3] - b[3], 2)
+  );
+};
+
+const pixelDistance3D = distance3D([0,0,0], [255,255,255]);
+
 const computeDiff = async (from, to, fuzz) => {
   if (from.width !== to.width) {
     throw new Error('the images do not have the same width');
@@ -46,11 +65,12 @@ const computeDiff = async (from, to, fuzz) => {
   }
 
   const start = Date.now();
+  let stamp = start;
 
   const output = document.createElement('canvas').getContext('2d').createImageData(from.width, from.height);
-  let differentPixels = 0;
+  let changedPixels = 0;
   let totalPixels = 0;
-  let stamp = Date.now();
+  let changedDistance = 0;
 
   for (let i = 0; i < from.data.length; i += 4) {
     totalPixels += 1;
@@ -58,15 +78,18 @@ const computeDiff = async (from, to, fuzz) => {
     const [fr, fg, fb, fa] = from.data.slice(i, i+4);
     const [tr, tg, tb, ta] = to.data.slice(i, i+4);
 
-    const pixelMatches = Math.abs(fr - tr) + Math.abs(fb - tb) + Math.abs(fg - tg) + Math.abs(fa - ta) <= fuzz;
+    const pixelDistance = distance3D([fr, fg, fb, fa], [tr, tg, tb, ta]);
+    const pixelMatches = pixelDistance <= fuzz;
+
+    changedDistance += pixelDistance;
 
     if (pixelMatches) {
-      output.data[i + 0] = Math.round((fr + fr + 255) / 3);
-      output.data[i + 1] = Math.round((fg + fg + 255) / 3);
-      output.data[i + 2] = Math.round((fb + fb + 255) / 3);
+      output.data[i + 0] = Math.round((fr + 255*2) / 3);
+      output.data[i + 1] = Math.round((fg + 255*2) / 3);
+      output.data[i + 2] = Math.round((fb + 255*2) / 3);
       output.data[i + 3] = fa;
     } else {
-      differentPixels += 1;
+      changedPixels += 1;
       output.data[i + 0] = 255;
       output.data[i + 1] = 0;
       output.data[i + 2] = 0;
@@ -79,9 +102,13 @@ const computeDiff = async (from, to, fuzz) => {
     }
   }
 
-  const diffPercent = differentPixels / totalPixels;
-
-  return { imageData: output, difference: diffPercent, time: Date.now() - start };
+  return {
+    time: Date.now() - start,
+    imageData: output,
+    changedPixels,
+    totalPixels,
+    changedDistance,
+  };
 };
 
 const loadDisplayImage = (() => {
@@ -103,14 +130,55 @@ const loadDisplayImage = (() => {
   };
 })();
 
+const fuzzControl = (percent, distance) => {
+  const percentToDistance = p => (Number(p) / 100) * pixelDistance3D;
+  const distanceToPercent = d => (Number(d) / pixelDistance3D) * 100;
+
+  let onchange;
+  let value = Number(distance.value);
+
+  if (!value) {
+    value = percentToDistance(percent.value || 0);
+  }
+
+  percent.addEventListener('change', () => {
+    value = percentToDistance(percent.value);
+    distance.value = value;
+    onchange && onchange();
+  });
+
+  distance.addEventListener('change', () => {
+    value = Number(distance.value);
+    percent.value = distanceToPercent(value);
+    onchange && onchange();
+  });
+
+  distance.value = value;
+  percent.value = distanceToPercent(value);
+
+  return Object.defineProperties({}, {
+    value: {
+      get: () => value
+    },
+    onchange: {
+      get: () => onchange,
+      set: val => { onchange = val; }
+    }
+  });
+};
+
 export default () => {
   const original = document.querySelector('#original');
   const candidate = document.querySelector('#candidate');
-  const fuzz = document.querySelector('#fuzz');
   const content = document.querySelector('.content');
   const percent = document.querySelector('.percent');
 
   const files = new Map();
+
+  const fuzz = fuzzControl(
+    document.querySelector('#fuzz-percent'),
+    document.querySelector('#fuzz-distance')
+  );
 
   const executeIfFilesLoaded = async () => {
     const original = files.get('original');
@@ -124,10 +192,17 @@ export default () => {
     content.classList.add('loading');
     await next();
 
-    // const fuzzValue = Number(fuzz.value) || 0;
-    // 10% in ImageMagic seems to be 10% per channel, not total ... I think
-    const fuzzValue = (Number(fuzz.value) || 0) * 4;
-    const { imageData, difference, time } = await computeDiff(original, candidate, fuzzValue);
+    const fuzzPercent = fuzz.value || 0;
+    // ImageMagick seems to use a 3D difference without accounting for alpha?
+    const fuzzDistance = (fuzzPercent / 100) * pixelDistance3D;
+
+    const {
+      time,
+      imageData,
+      changedPixels,
+      totalPixels,
+      changedDistance,
+    } = await computeDiff(original, candidate, fuzzDistance);
 
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
@@ -141,7 +216,12 @@ export default () => {
     await loadDisplayImage(content, canvas);
     content.classList.remove('loading');
 
-    percent.innerHTML = `${(difference * 100).toFixed(2)}% difference<br/>in ${time}ms`;
+    percent.innerHTML = [
+      `${(changedPixels / totalPixels * 100).toFixed(2)}% difference`,
+      `${changedPixels} / ${totalPixels} pixels`,
+      `${(changedDistance / (pixelDistance3D * totalPixels) * 100).toFixed(2)}% total distance`,
+      `in ${time}ms`
+    ].join('<br/>');
   };
 
   const loadLabel = (elem, text, name) => {
@@ -235,7 +315,7 @@ export default () => {
   candidate.addEventListener('click', onClick('candidate'));
   candidate.addEventListener('drop', onDropFile('candidate'));
 
-  fuzz.addEventListener('change', executeIfFilesLoaded);
+  fuzz.onchange = () => executeIfFilesLoaded();
 
   window.addEventListener('drop', onDrop);
   window.addEventListener('dragover', onDrag);

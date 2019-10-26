@@ -2,6 +2,9 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Image Diff</title>
 
   <style>
@@ -51,6 +54,10 @@
       background-size: 20vh;
     }
 
+    .inputs [type=number] {
+      width: 4em;
+    }
+
     .content img {
       max-width: 100%;
       max-height: 80vh;
@@ -86,8 +93,9 @@
       Drop or click to open image
     </div>
     <div class="inputs">
+      <p>Fuzz</p>
       <p>
-        Fuzz: <input type="number" value="10" id="fuzz">
+        percent <input type="number" value="1" id="fuzz-percent"> OR distance <input type="number" id="fuzz-distance">
       </p>
       <p class="percent"></p>
     </div>
