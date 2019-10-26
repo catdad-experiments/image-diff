@@ -61,9 +61,9 @@ const computeDiff = async (from, to, fuzz) => {
     const pixelMatches = Math.abs(fr - tr) + Math.abs(fb - tb) + Math.abs(fg - tg) + Math.abs(fa - ta) <= fuzz;
 
     if (pixelMatches) {
-      output.data[i + 0] = Math.round((fr + fr + 255) / 3);
-      output.data[i + 1] = Math.round((fg + fg + 255) / 3);
-      output.data[i + 2] = Math.round((fb + fb + 255) / 3);
+      output.data[i + 0] = Math.round((fr + 255*2) / 3);
+      output.data[i + 1] = Math.round((fg + 255*2) / 3);
+      output.data[i + 2] = Math.round((fb + 255*2) / 3);
       output.data[i + 3] = fa;
     } else {
       differentPixels += 1;
