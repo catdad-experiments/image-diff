@@ -171,7 +171,7 @@ const fuzzControl = (percent, distance) => {
 export default () => {
   const original = document.querySelector('#original');
   const candidate = document.querySelector('#candidate');
-  const content = document.querySelector('.content');
+  const content = document.querySelector('#image');
   const percent = document.querySelector('.percent');
 
   const files = new Map();
