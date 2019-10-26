@@ -53,6 +53,7 @@ const distance4D = (a, b) => {
   );
 };
 
+// ImageMagick seems to use a 3D difference without accounting for alpha?
 const pixelDistance3D = distance3D([0,0,0], [255,255,255]);
 
 const computeDiff = async (from, to, fuzz) => {
@@ -192,9 +193,7 @@ export default () => {
     content.classList.add('loading');
     await next();
 
-    const fuzzPercent = fuzz.value || 0;
-    // ImageMagick seems to use a 3D difference without accounting for alpha?
-    const fuzzDistance = (fuzzPercent / 100) * pixelDistance3D;
+    const fuzzDistance = fuzz.value || 0;
 
     const {
       time,
