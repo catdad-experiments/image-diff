@@ -36,6 +36,15 @@ const getImageData = async file => {
   return ctx.getImageData(0, 0, naturalWidth, naturalHeight);
 };
 
+const pointDistance = (a, b) => {
+  return Math.sqrt(
+    Math.pow(a[0] - b[0], 2) +
+    Math.pow(a[1] - b[1], 2) +
+    Math.pow(a[2] - b[2], 2) +
+    Math.pow(a[3] - b[3], 2)
+  );
+};
+
 const computeDiff = async (from, to, fuzz) => {
   if (from.width !== to.width) {
     throw new Error('the images do not have the same width');
@@ -45,12 +54,14 @@ const computeDiff = async (from, to, fuzz) => {
     throw new Error('the images do not have the same height');
   }
 
+  const fuzzDistance = (fuzz / 100) * 441.672956;
+
   const start = Date.now();
+  let stamp = start;
 
   const output = document.createElement('canvas').getContext('2d').createImageData(from.width, from.height);
   let differentPixels = 0;
   let totalPixels = 0;
-  let stamp = Date.now();
 
   for (let i = 0; i < from.data.length; i += 4) {
     totalPixels += 1;
@@ -58,7 +69,7 @@ const computeDiff = async (from, to, fuzz) => {
     const [fr, fg, fb, fa] = from.data.slice(i, i+4);
     const [tr, tg, tb, ta] = to.data.slice(i, i+4);
 
-    const pixelMatches = Math.abs(fr - tr) + Math.abs(fb - tb) + Math.abs(fg - tg) + Math.abs(fa - ta) <= fuzz;
+    const pixelMatches = pointDistance([fr, fg, fb, fa], [tr, tg, tb, ta]) <= fuzzDistance;
 
     if (pixelMatches) {
       output.data[i + 0] = Math.round((fr + 255*2) / 3);
@@ -81,7 +92,16 @@ const computeDiff = async (from, to, fuzz) => {
 
   const diffPercent = differentPixels / totalPixels;
 
-  return { imageData: output, difference: diffPercent, time: Date.now() - start };
+  console.log('diff pixels', differentPixels);
+  console.log('total pixels', totalPixels);
+
+  return {
+    time: Date.now() - start,
+    imageData: output,
+    difference: diffPercent,
+    differentPixels,
+    totalPixels
+  };
 };
 
 const loadDisplayImage = (() => {
@@ -124,9 +144,7 @@ export default () => {
     content.classList.add('loading');
     await next();
 
-    // const fuzzValue = Number(fuzz.value) || 0;
-    // 10% in ImageMagic seems to be 10% per channel, not total ... I think
-    const fuzzValue = (Number(fuzz.value) || 0) * 4;
+    const fuzzValue = Number(fuzz.value) || 0;
     const { imageData, difference, time } = await computeDiff(original, candidate, fuzzValue);
 
     const canvas = document.createElement('canvas');
